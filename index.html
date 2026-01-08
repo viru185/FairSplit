@@ -27,13 +27,24 @@
 
             <form id="calculator" class="grid">
                 <div class="field">
-                    <label for="units">Total Units (optional)</label>
+                    <label for="units">Total Units</label>
                     <input type="number" id="units" name="units" inputmode="numeric" placeholder="e.g. 120" />
+                    <div class="hint"><strong>Note:</strong> Enter units <strong>or</strong> a bill amount — not both. Units will auto-convert to bill.</div>
                 </div>
 
                 <div class="field">
-                    <label for="bill">Total Bill (optional)</label>
+                    <label for="bill">Total Bill</label>
                     <input type="number" id="bill" name="bill" inputmode="decimal" placeholder="e.g. 1500" />
+                </div>
+
+                <div class="field">
+                    <label for="startMonth">Start month</label>
+                    <input type="month" id="startMonth" />
+                </div>
+
+                <div class="field">
+                    <label for="monthSpan">Span (months)</label>
+                    <input type="number" id="monthSpan" min="1" value="1" />
                 </div>
 
                 <div class="field full">
@@ -48,6 +59,7 @@
                 <div class="field full actions">
                     <button type="button" id="calculate" class="btn primary">Calculate</button>
                     <button type="button" id="export" class="btn">Copy Result</button>
+                    <button type="button" id="shareWhatsApp" class="btn">Share (WhatsApp)</button>
                 </div>
             </form>
 

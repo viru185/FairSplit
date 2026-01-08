@@ -8,9 +8,15 @@ const addPersonBtn = document.getElementById("addPerson");
 const calculateBtn = document.getElementById("calculate");
 const resetBtn = document.getElementById("reset");
 const exportBtn = document.getElementById("export");
+const shareBtn = document.getElementById("shareWhatsApp");
 const resultEl = document.getElementById("result");
 const unitsEl = document.getElementById("units");
 const billEl = document.getElementById("bill");
+const startMonthEl = document.getElementById("startMonth");
+const monthSpanEl = document.getElementById("monthSpan");
+
+let lastPlainText = "";
+let _suppress = false;
 
 // Helpers
 function createPerson(name = "", days = 1) {
@@ -26,7 +32,29 @@ function createPerson(name = "", days = 1) {
     <button type="button" class="remove" title="Remove">✕</button>
   `;
 
-    el.querySelector(".remove").addEventListener("click", () => el.remove());
+    const daysInput = el.querySelector(".days");
+    const removeBtn = el.querySelector(".remove");
+
+    removeBtn.addEventListener("click", () => el.remove());
+
+    // Wheel to increase/decrease days
+    daysInput.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const max = getTotalDaysInSpan();
+        const step = e.deltaY < 0 ? 1 : -1;
+        let v = Number(daysInput.value || 0) + step;
+        v = Math.max(1, Math.min(max, v));
+        daysInput.value = v;
+        compute();
+    });
+
+    // Clamp on input
+    daysInput.addEventListener("input", () => {
+        const max = getTotalDaysInSpan();
+        let v = Math.max(1, Math.min(max, Number(daysInput.value) || 1));
+        daysInput.value = v;
+    });
+
     return el;
 }
 
@@ -37,10 +65,47 @@ function escapeHtml(s) {
         .replace(/>/g, "&gt;");
 }
 
+function daysInMonth(y, m) {
+    return new Date(y, m + 1, 0).getDate();
+}
+
+function getTotalDaysInSpan() {
+    const start = startMonthEl.value;
+    const span = Math.max(1, Number(monthSpanEl.value) || 1);
+    if (!start) {
+        // default to current month
+        const now = new Date();
+        let total = 0;
+        for (let i = 0; i < span; i++) {
+            total += daysInMonth(now.getFullYear(), now.getMonth() + i);
+        }
+        return total;
+    }
+    const [y, m] = start.split("-").map(Number);
+    let total = 0;
+    for (let i = 0; i < span; i++) {
+        const monthIndex = m - 1 + i; // zero-based
+        const year = y + Math.floor(monthIndex / 12);
+        const mon = monthIndex % 12;
+        total += daysInMonth(year, mon);
+    }
+    return total;
+}
+
 // Actions
 function addPerson(name = "", days = 1) {
     peopleList.appendChild(createPerson(name, days));
+    // update max days for the newly created input
+    updateDaysMax();
     peopleList.querySelector(".person:last-child .pname").focus();
+}
+
+function updateDaysMax() {
+    const max = getTotalDaysInSpan();
+    document.querySelectorAll(".person .days").forEach((el) => {
+        el.max = max;
+        if (Number(el.value) > max) el.value = max;
+    });
 }
 
 function resetForm() {
@@ -48,6 +113,10 @@ function resetForm() {
     billEl.value = "";
     peopleList.innerHTML = "";
     resultEl.innerHTML = "";
+    // set default month to current
+    const now = new Date();
+    monthSpanEl.value = 1;
+    startMonthEl.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     addPerson("Person 1");
 }
 
@@ -64,8 +133,7 @@ function compute() {
     }
 
     const people = personEls.map((el, i) => {
-        const name =
-            el.querySelector(".pname").value.trim() || `Person ${i + 1}`;
+        const name = el.querySelector(".pname").value.trim() || `Person ${i + 1}`;
         const days = Math.max(1, Number(el.querySelector(".days").value) || 1);
         return { name, days };
     });
@@ -73,25 +141,25 @@ function compute() {
     const totalDays = people.reduce((s, p) => s + p.days, 0);
     const costPerDay = bill / totalDays;
 
-    // Build result
-    let html = `<div class="row"><strong>Total Bill</strong><strong>${CURRENCY}${bill.toFixed(
-        2
-    )}</strong></div>`;
+    // Build result (html)
+    let html = `<div class="row"><strong>Total Bill</strong><strong>${CURRENCY}${bill.toFixed(2)}</strong></div>`;
+    let lines = [`Total Bill: ${CURRENCY}${bill.toFixed(2)}`, `Billing period days: ${getTotalDaysInSpan()}`];
+
     people.forEach((p) => {
         const share = p.days * costPerDay;
-        html += `<div class="row"><span>${escapeHtml(
-            p.name
-        )}</span><span>${CURRENCY}${share.toFixed(2)}</span></div>`;
+        html += `<div class="row"><span>${escapeHtml(p.name)}</span><span>${CURRENCY}${share.toFixed(2)}</span></div>`;
+        lines.push(`${p.name}: ${CURRENCY}${share.toFixed(2)} (${p.days} days)`);
     });
 
+    lastPlainText = lines.join("\n");
     resultEl.innerHTML = html;
 }
 
-// Copy result to clipboard
+// Copy result to clipboard (multi-line)
 async function copyResult() {
-    if (!resultEl.textContent.trim()) return;
+    if (!lastPlainText) return;
     try {
-        await navigator.clipboard.writeText(resultEl.textContent);
+        await navigator.clipboard.writeText(lastPlainText);
         exportBtn.textContent = "Copied!";
         setTimeout(() => (exportBtn.textContent = "Copy Result"), 1400);
     } catch (e) {
@@ -100,11 +168,56 @@ async function copyResult() {
     }
 }
 
+function shareToWhatsApp() {
+    if (!lastPlainText) return;
+    const encoded = encodeURIComponent(lastPlainText);
+    const url = `https://wa.me/?text=${encoded}`;
+    window.open(url, "_blank");
+}
+
+// Manage mutual exclusivity between units and bill
+unitsEl.addEventListener("input", () => {
+    if (_suppress) return;
+    const v = Number(unitsEl.value);
+    if (v) {
+        _suppress = true;
+        billEl.value = (v * UNIT_PRICE).toFixed(2);
+        billEl.disabled = true;
+        _suppress = false;
+    } else {
+        billEl.disabled = false;
+    }
+    debounceCompute();
+});
+
+billEl.addEventListener("input", () => {
+    if (_suppress) return;
+    const v = Number(billEl.value);
+    if (v) {
+        _suppress = true;
+        unitsEl.value = (v / UNIT_PRICE).toFixed(2);
+        unitsEl.disabled = true;
+        _suppress = false;
+    } else {
+        unitsEl.disabled = false;
+    }
+    debounceCompute();
+});
+
+// Update days max when month inputs change
+[startMonthEl, monthSpanEl].forEach((el) =>
+    el.addEventListener("change", () => {
+        updateDaysMax();
+        debounceCompute();
+    })
+);
+
 // Init handlers
 addPersonBtn.addEventListener("click", () => addPerson());
 resetBtn.addEventListener("click", resetForm);
 calculateBtn.addEventListener("click", compute);
 exportBtn.addEventListener("click", copyResult);
+shareBtn && shareBtn.addEventListener("click", shareToWhatsApp);
 
 // Allow Enter to add a person when focused on last name
 peopleList.addEventListener("keydown", (e) => {
@@ -114,16 +227,15 @@ peopleList.addEventListener("keydown", (e) => {
     }
 });
 
-// Start with one person
+// Start with one person and sensible defaults
 resetForm();
+updateDaysMax();
 
 // Small enhancement: compute when bill or units change after a pause (debounce)
 let _t;
-[unitsEl, billEl].forEach((el) =>
-    el.addEventListener("input", () => {
-        clearTimeout(_t);
-        _t = setTimeout(() => {
-            if (document.querySelectorAll(".person").length) compute();
-        }, 700);
-    })
-);
+function debounceCompute() {
+    clearTimeout(_t);
+    _t = setTimeout(() => {
+        if (document.querySelectorAll(".person").length) compute();
+    }, 400);
+}

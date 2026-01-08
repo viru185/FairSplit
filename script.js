@@ -5,7 +5,6 @@ const CURRENCY = "₹";
 // DOM
 const peopleList = document.getElementById("peopleList");
 const addPersonBtn = document.getElementById("addPerson");
-const calculateBtn = document.getElementById("calculate");
 const resetBtn = document.getElementById("reset");
 const exportBtn = document.getElementById("export");
 const shareBtn = document.getElementById("shareWhatsApp");
@@ -14,6 +13,11 @@ const unitsEl = document.getElementById("units");
 const billEl = document.getElementById("bill");
 const startMonthEl = document.getElementById("startMonth");
 const monthSpanEl = document.getElementById("monthSpan");
+
+// Update unit price in HTML
+document
+    .querySelectorAll(".unit-price")
+    .forEach((el) => (el.textContent = `₹${UNIT_PRICE}/unit`));
 
 let lastPlainText = "";
 let _suppress = false;
@@ -116,7 +120,9 @@ function resetForm() {
     // set default month to current
     const now = new Date();
     monthSpanEl.value = 1;
-    startMonthEl.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    startMonthEl.value = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+    ).padStart(2, "0")}`;
     addPerson("Person 1");
 }
 
@@ -125,6 +131,10 @@ function compute() {
     let bill = Number(billEl.value);
 
     if (!bill && units) bill = units * UNIT_PRICE;
+    if (!units && bill) {
+        // derive units from bill
+        unitsEl.value = (bill / UNIT_PRICE).toFixed(2);
+    }
 
     const personEls = Array.from(document.querySelectorAll(".person"));
     if (!bill || personEls.length === 0) {
@@ -133,7 +143,8 @@ function compute() {
     }
 
     const people = personEls.map((el, i) => {
-        const name = el.querySelector(".pname").value.trim() || `Person ${i + 1}`;
+        const name =
+            el.querySelector(".pname").value.trim() || `Person ${i + 1}`;
         const days = Math.max(1, Number(el.querySelector(".days").value) || 1);
         return { name, days };
     });
@@ -142,13 +153,22 @@ function compute() {
     const costPerDay = bill / totalDays;
 
     // Build result (html)
-    let html = `<div class="row"><strong>Total Bill</strong><strong>${CURRENCY}${bill.toFixed(2)}</strong></div>`;
-    let lines = [`Total Bill: ${CURRENCY}${bill.toFixed(2)}`, `Billing period days: ${getTotalDaysInSpan()}`];
+    let html = `<div class="row"><strong>Total Bill</strong><strong>${CURRENCY}${bill.toFixed(
+        2
+    )}</strong></div>`;
+    let lines = [
+        `Total Bill: ${CURRENCY}${bill.toFixed(2)}`,
+        `Billing period days: ${getTotalDaysInSpan()}`,
+    ];
 
     people.forEach((p) => {
         const share = p.days * costPerDay;
-        html += `<div class="row"><span>${escapeHtml(p.name)}</span><span>${CURRENCY}${share.toFixed(2)}</span></div>`;
-        lines.push(`${p.name}: ${CURRENCY}${share.toFixed(2)} (${p.days} days)`);
+        html += `<div class="row"><span>${escapeHtml(
+            p.name
+        )}</span><span>${CURRENCY}${share.toFixed(2)}</span></div>`;
+        lines.push(
+            `${p.name}: ${CURRENCY}${share.toFixed(2)} (${p.days} days)`
+        );
     });
 
     lastPlainText = lines.join("\n");
@@ -175,17 +195,18 @@ function shareToWhatsApp() {
     window.open(url, "_blank");
 }
 
-// Manage mutual exclusivity between units and bill
+// Bidirectional units/bill sync
 unitsEl.addEventListener("input", () => {
     if (_suppress) return;
     const v = Number(unitsEl.value);
-    if (v) {
+    if (v > 0) {
         _suppress = true;
         billEl.value = (v * UNIT_PRICE).toFixed(2);
-        billEl.disabled = true;
         _suppress = false;
     } else {
-        billEl.disabled = false;
+        _suppress = true;
+        billEl.value = "";
+        _suppress = false;
     }
     debounceCompute();
 });
@@ -193,13 +214,14 @@ unitsEl.addEventListener("input", () => {
 billEl.addEventListener("input", () => {
     if (_suppress) return;
     const v = Number(billEl.value);
-    if (v) {
+    if (v > 0) {
         _suppress = true;
         unitsEl.value = (v / UNIT_PRICE).toFixed(2);
-        unitsEl.disabled = true;
         _suppress = false;
     } else {
-        unitsEl.disabled = false;
+        _suppress = true;
+        unitsEl.value = "";
+        _suppress = false;
     }
     debounceCompute();
 });
@@ -215,9 +237,21 @@ billEl.addEventListener("input", () => {
 // Init handlers
 addPersonBtn.addEventListener("click", () => addPerson());
 resetBtn.addEventListener("click", resetForm);
-calculateBtn.addEventListener("click", compute);
 exportBtn.addEventListener("click", copyResult);
 shareBtn && shareBtn.addEventListener("click", shareToWhatsApp);
+
+// Wheel support for units, bill, monthSpan
+function addWheelSupport(input, computeFn = debounceCompute) {
+    input.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const step = e.deltaY < 0 ? 1 : -1;
+        let v = Number(input.value || 0) + step;
+        if (input.min) v = Math.max(Number(input.min), v);
+        if (input.max) v = Math.min(Number(input.max), v);
+        input.value = v || "";
+        computeFn();
+    });
+}
 
 // Allow Enter to add a person when focused on last name
 peopleList.addEventListener("keydown", (e) => {
@@ -226,6 +260,11 @@ peopleList.addEventListener("keydown", (e) => {
         addPerson();
     }
 });
+
+// Add wheel support to number inputs
+addWheelSupport(unitsEl);
+addWheelSupport(billEl);
+addWheelSupport(monthSpanEl);
 
 // Start with one person and sensible defaults
 resetForm();

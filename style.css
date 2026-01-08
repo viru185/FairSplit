@@ -26,39 +26,34 @@ body {
         "Helvetica Neue", Arial;
     -webkit-font-smoothing: antialiased;
 }
-.hint{font-size:12px;color:var(--muted);margin-top:6px}
-input[type="month"]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:inherit}
-#shareWhatsApp{background:transparent;border:1px solid rgba(0,0,0,0.06)}
-.wrap {
-    margin: 28px auto;
-    padding: 0 18px;
-    max-width: 920px;
-}
-.site-header {
-    margin-top: 10px;
-}
-.site-header h1 {
-    margin: 0;
-    font-weight: 700;
-    letter-spacing: -0.4px;
-}
-.tag {
-    margin: 6px 0 0;
+.hint {
+    font-size: 12px;
     color: var(--muted);
+    margin-top: 6px;
 }
-.card {
-    margin-top: 18px;
-    box-shadow: 0 6px 18px rgba(4, 6, 12, 0.6);
-    border-radius: var(--radius);
-    background: linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.02),
-        rgba(255, 255, 255, 0.01)
-    );
-    padding: 20px;
+.unit-price {
+    font-size: 12px;
+    color: var(--accent);
+    margin: 4px 0 6px 0;
+    font-weight: 500;
 }
-.card-header .muted {
-    margin: 6px 0 0;
+input[type="month"] {
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    background: transparent;
+    color: #e6eef8;
+}
+input[type="month"]::before {
+    color: #e6eef8;
+}
+input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    cursor: pointer;
+}
+#shareWhatsApp {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.04);
     color: var(--muted);
 }
 .grid {
@@ -66,6 +61,12 @@ input[type="month"]{padding:8px;border-radius:8px;border:1px solid rgba(255,255,
     grid-template-columns: repeat(2, 1fr);
     align-items: end;
     gap: 12px;
+}
+.grid .field {
+    min-height: 0;
+}
+.card-header {
+    margin-bottom: 12px;
 }
 .field {
     display: flex;

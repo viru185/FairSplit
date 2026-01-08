@@ -1,32 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Electricity Bill Splitter</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>FairSplit — Electricity Bill Splitter</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+    <header class="site-header">
+        <div class="wrap">
+            <h1>FairSplit</h1>
+            <p class="tag">Simple, modern electricity bill sharing</p>
+        </div>
+    </header>
 
-<div class="container">
-    <h2>Electricity Bill Splitter</h2>
+    <main class="wrap">
+        <section class="card" aria-labelledby="app-title">
+            <div class="card-header">
+                <h2 id="app-title">Electricity Bill Splitter</h2>
+                <p class="muted">Enter units or the total bill, add people, and split based on days stayed.</p>
+            </div>
 
-    <label>Total Units (optional)</label>
-    <input type="number" id="units" placeholder="Enter units">
+            <form id="calculator" class="grid">
+                <div class="field">
+                    <label for="units">Total Units (optional)</label>
+                    <input type="number" id="units" name="units" inputmode="numeric" placeholder="e.g. 120" />
+                </div>
 
-    <label>Total Bill (optional)</label>
-    <input type="number" id="bill" placeholder="Enter total bill">
+                <div class="field">
+                    <label for="bill">Total Bill (optional)</label>
+                    <input type="number" id="bill" name="bill" inputmode="decimal" placeholder="e.g. 1500" />
+                </div>
 
-    <label>Number of People</label>
-    <input type="number" id="peopleCount" min="1">
-    <button onclick="generateInputs()">Generate</button>
+                <div class="field full">
+                    <label>People</label>
+                    <div id="peopleList" class="people-list" aria-live="polite"></div>
+                    <div class="people-actions">
+                        <button type="button" id="addPerson" class="btn small">+ Add Person</button>
+                        <button type="button" id="reset" class="btn small ghost">Reset</button>
+                    </div>
+                </div>
 
-    <div id="peopleInputs"></div>
+                <div class="field full actions">
+                    <button type="button" id="calculate" class="btn primary">Calculate</button>
+                    <button type="button" id="export" class="btn">Copy Result</button>
+                </div>
+            </form>
 
-    <button class="calculate" onclick="calculate()">Calculate</button>
+            <div id="result" class="result" aria-live="polite"></div>
+        </section>
 
-    <div id="result"></div>
-</div>
+    </main>
 
-<script src="script.js"></script>
+    <footer class="site-footer wrap">
+        <p class="muted">Made with ❤ — FairSplit</p>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
+
 </html>

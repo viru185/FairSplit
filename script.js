@@ -116,7 +116,7 @@ function resetForm() {
     unitsEl.value = "";
     billEl.value = "";
     peopleList.innerHTML = "";
-    resultEl.innerHTML = "";
+    resultEl.innerHTML = "<div class=\"muted\">Enter a bill (or units) and add at least one person.</div>";
     // set default month to current
     const now = new Date();
     monthSpanEl.value = 1;

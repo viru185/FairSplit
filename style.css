@@ -32,7 +32,8 @@ body {
     font-size: 12px;
 }
 .unit-price {
-    margin: 4px 0 6px 0;
+    align-self: flex-start;
+    margin: 0;
     color: var(--accent);
     font-weight: 500;
     font-size: 12px;
@@ -40,7 +41,11 @@ body {
 input[type="month"] {
     border: 1px solid rgba(255, 255, 255, 0.03);
     border-radius: 8px;
-    background: transparent;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.01),
+        rgba(255, 255, 255, 0.02)
+    );
     padding: 8px;
     color: #e6eef8;
 }
@@ -93,7 +98,6 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     color: var(--muted);
 }
 .card {
-    margin-top: 18px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border-radius: var(--radius);
     background: linear-gradient(
@@ -104,7 +108,7 @@ input[type="month"]::-webkit-calendar-picker-indicator {
     padding: 20px;
 }
 .card-header .muted {
-    margin: 6px 0 0;
+    margin: 0 0 12px;
     color: var(--muted);
 }
 .field {
@@ -118,6 +122,10 @@ label {
     margin-bottom: 6px;
     color: var(--muted);
     font-size: 13px;
+}
+.label-row {
+    display: block;
+    margin-bottom: 6px;
 }
 input[type="number"],
 input[type="text"] {

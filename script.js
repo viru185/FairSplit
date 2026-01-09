@@ -17,7 +17,7 @@ const monthSpanEl = document.getElementById("monthSpan");
 // Update unit price in HTML
 document
     .querySelectorAll(".unit-price")
-    .forEach((el) => (el.textContent = `₹${UNIT_PRICE}/unit`));
+    .forEach((el) => (el.textContent = `(₹${UNIT_PRICE}/unit)`));
 
 let lastPlainText = "";
 let _suppress = false;

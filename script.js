@@ -127,13 +127,24 @@ function resetForm() {
 }
 
 function compute() {
-    const units = Number(unitsEl.value);
+    let units = Number(unitsEl.value);
     let bill = Number(billEl.value);
 
-    if (!bill && units) bill = units * UNIT_PRICE;
-    if (!units && bill) {
-        // derive units from bill
-        unitsEl.value = (bill / UNIT_PRICE).toFixed(2);
+    // Auto-sync if only one is set
+    if (!bill && units > 0) {
+        bill = units * UNIT_PRICE;
+    }
+    if (!units && bill > 0) {
+        units = bill / UNIT_PRICE;
+        unitsEl.value = units.toFixed(2);
+    }
+    if (units > 0 && !bill) {
+        bill = units * UNIT_PRICE;
+        billEl.value = bill.toFixed(2);
+    }
+    if (bill > 0 && !units) {
+        units = bill / UNIT_PRICE;
+        unitsEl.value = units.toFixed(2);
     }
 
     const personEls = Array.from(document.querySelectorAll(".person"));
@@ -199,13 +210,13 @@ function shareToWhatsApp() {
 unitsEl.addEventListener("input", () => {
     if (_suppress) return;
     const v = Number(unitsEl.value);
-    if (v > 0) {
+    if (v >= 0) {
         _suppress = true;
-        billEl.value = (v * UNIT_PRICE).toFixed(2);
-        _suppress = false;
-    } else {
-        _suppress = true;
-        billEl.value = "";
+        if (v > 0) {
+            billEl.value = (v * UNIT_PRICE).toFixed(2);
+        } else {
+            billEl.value = "";
+        }
         _suppress = false;
     }
     debounceCompute();
@@ -214,13 +225,13 @@ unitsEl.addEventListener("input", () => {
 billEl.addEventListener("input", () => {
     if (_suppress) return;
     const v = Number(billEl.value);
-    if (v > 0) {
+    if (v >= 0) {
         _suppress = true;
-        unitsEl.value = (v / UNIT_PRICE).toFixed(2);
-        _suppress = false;
-    } else {
-        _suppress = true;
-        unitsEl.value = "";
+        if (v > 0) {
+            unitsEl.value = (v / UNIT_PRICE).toFixed(2);
+        } else {
+            unitsEl.value = "";
+        }
         _suppress = false;
     }
     debounceCompute();

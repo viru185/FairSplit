@@ -163,13 +163,44 @@ function compute() {
     const totalDays = people.reduce((s, p) => s + p.days, 0);
     const costPerDay = bill / totalDays;
 
+    // Format period info
+    const start = startMonthEl.value;
+    const span = Number(monthSpanEl.value) || 1;
+    let periodStr = "";
+    if (start) {
+        const [y, m] = start.split("-").map(Number);
+        const startDate = new Date(y, m - 1, 1).toLocaleDateString("en-US", {
+            month: "short",
+            year: "numeric",
+        });
+        if (span === 1) {
+            periodStr = startDate;
+        } else {
+            const endMonth = m - 1 + span;
+            const endY = y + Math.floor(endMonth / 12);
+            const endM = (endMonth % 12) + 1;
+            const endDate = new Date(endY, endM - 1, 1).toLocaleDateString(
+                "en-US",
+                { month: "short", year: "numeric" }
+            );
+            periodStr = `${startDate} to ${endDate}`;
+        }
+    }
+
     // Build result (html)
     let html = `<div class="row"><strong>Total Bill</strong><strong>${CURRENCY}${bill.toFixed(
         2
     )}</strong></div>`;
     let lines = [
+        `FairSplit - Electricity Bill Splitter`,
+        `Website: https://www.virenhirpara.com/fairsplit`,
+        "",
+        `Unit Price: ${CURRENCY}${UNIT_PRICE}/unit`,
+        `Total Units: ${units.toFixed(2)}`,
         `Total Bill: ${CURRENCY}${bill.toFixed(2)}`,
+        `Billing Period: ${periodStr}`,
         `Billing period days: ${getTotalDaysInSpan()}`,
+        "",
     ];
 
     people.forEach((p) => {
